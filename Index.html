@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Saathi - Your Personal Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chat-container {
+            width: 400px;
+            height: 700px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .ai-avatar {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #4facfe;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .ai-message {
+            justify-content: flex-start;
+        }
+
+        .user-message {
+            justify-content: flex-end;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .ai-bubble {
+            background: white;
+            border-bottom-left-radius: 5px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-bubble {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 18px;
+            border-bottom-left-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #999;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        .chat-input {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+        }
+
+        #message-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            outline: none;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        #message-input:focus {
+            border-color: #4facfe;
+        }
+
+        #send-button {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: transform 0.2s;
+        }
+
+        #send-button:hover {
+            transform: scale(1.05);
+        }
+
+        .timestamp {
+            font-size: 11px;
+            color: #999;
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        /* Scrollbar styling */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="ai-avatar">AI</div>
+            <h3>AI Saathi</h3>
+            <p>Your Personal Assistant</p>
+        </div>
+
+        <div class="chat-messages" id="chat-messages">
+            <!-- Messages will appear here -->
+        </div>
+
+        <div class="typing-indicator" id="typing-indicator">
+            <div class="typing-dots">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>
+
+        <div class="chat-input">
+            <input type="text" id="message-input" placeholder="Type your message here..." autocomplete="off">
+            <button id="send-button">➤</button>
+        </div>
+    </div>
+
+    <script>
+        // AI Responses database
+        const aiResponses = {
+            'hello': 'Namaste! Main aapka AI Saathi hoon. Aaj main aapki kya madad kar sakta hoon?',
+            'how are you': 'Main bilkul theek hoon, dhanyavad! Aapka din kaisa chal raha hai?',
+            'what is your name': 'Mera naam AI Saathi hai! Main yahan aapki madad ke liye hoon.',
+            'time': `Abhi samay hai: ${new Date().toLocaleTimeString('hi-IN')}`,
+            'date': `Aaj ki taarik hai: ${new Date().toLocaleDateString('hi-IN')}`,
+            'joke': 'Ek programmer restaurant gaya aur waiter se kaha: "Mujhe byte-sized snacks chahiye!" Waiter bola: "Sir, byte-sized ya bit-sized?" Programmer bola: "Don\'t byte off more than you can chew!" 😄',
+            'weather': 'Mere paas real-time weather data nahi hai, lekin aap apne area ka mausam check karne ke liye kisi weather app ka use kar sakte hain!',
+            'help': 'Main aapki help kar sakta hoon in topics mein:\n- General knowledge\n- Time/Date\n- Jokes\n- Study help\n- Idea generation\n- Aur bahut kuch!',
+            'default': 'Yeh interesting question hai! Main abhi is level ka jawab dene mein saksham nahi hoon, lekin aap koi aur sawal pooch sakte hain.'
+        };
+
+        // Get DOM elements
+        const chatMessages = document.getElementById('chat-messages');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const typingIndicator = document.getElementById('typing-indicator');
+
+        // Add welcome message when page loads
+        window.onload = function() {
+            addAIMessage('Namaste! 👋 Main aapka AI Saathi hoon. Aap mujhse kuch bhi pooch sakte hain - homework help, jokes, ideas, ya simply baat cheet!');
+        };
+
+        // Function to add AI message
+        function addAIMessage(text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai-message';
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble ai-bubble';
+            bubble.innerHTML = text.replace(/\n/g, '<br>');
+            
+            const timestamp = document.createElement('div');
+            timestamp.className = 'timestamp';
+            timestamp.textContent = getCurrentTime();
+            
+            messageDiv.appendChild(bubble);
+            messageDiv.appendChild(timestamp);
+            chatMessages.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        // Function to add user message
+        function addUserMessage(text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user-message';
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble user-bubble';
+            bubble.textContent = text;
+            
+            const timestamp = document.createElement('div');
+            timestamp.className = 'timestamp';
+            timestamp.textContent = getCurrentTime();
+            
+            messageDiv.appendChild(bubble);
+            messageDiv.appendChild(timestamp);
+            chatMessages.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        // Function to get current time
+        function getCurrentTime() {
+            return new Date().toLocaleTimeString('hi-IN', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: true 
+            });
+        }
+
+        // Function to scroll to bottom
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Function to show typing indicator
+        function showTyping() {
+            typingIndicator.style.display = 'block';
+            scrollToBottom();
+        }
+
+        // Function to hide typing indicator
+        function hideTyping() {
+            typingIndicator.style.display = 'none';
+        }
+
+        // Function to get AI response
+        function getAIResponse(userMessage) {
+            const lowerMessage = userMessage.toLowerCase();
+            
+            // Check for specific keywords
+            if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('namaste')) {
+                return aiResponses.hello;
+            } else if (lowerMessage.includes('how are you')) {
+                return aiResponses['how are you'];
+            } else if (lowerMessage.includes('name')) {
+                return aiResponses['what is your name'];
+            } else if (lowerMessage.includes('time')) {
+                return aiResponses.time;
+            } else if (lowerMessage.includes('date')) {
+                return aiResponses.date;
+            } else if (lowerMessage.includes('joke') || lowerMessage.includes('funny')) {
+                return aiResponses.joke;
+            } else if (lowerMessage.includes('weather')) {
+                return aiResponses.weather;
+            } else if (lowerMessage.includes('help')) {
+                return aiResponses.help;
+            } else {
+                // For other messages, provide intelligent responses
+                if (lowerMessage.includes('?')) {
+                    return 'Achcha sawal hai! Main yeh suggest kar sakta hoon: Internet par is topic par bahut si useful information available hai. Aap specific details ke liye search kar sakte hain.';
+                } else if (lowerMessage.length < 5) {
+                    return 'Kya aap thoda detailed bata sakte hain? Main aapki better help kar paunga.';
+                } else {
+                    return aiResponses.default;
+                }
+            }
+        }
+
+        // Function to handle message sending
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            
+            if (message === '') return;
+            
+            // Add user message
+            addUserMessage(message);
+            messageInput.value = '';
+            
+            // Show typing indicator
+            showTyping();
+            
+            // Simulate AI thinking time
+            setTimeout(() => {
+                hideTyping();
+                const aiResponse = getAIResponse(message);
+                addAIMessage(aiResponse);
+            }, 1500);
+        }
+
+        // Event listeners
+        sendButton.addEventListener('click', sendMessage);
+
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Focus on input field
+        messageInput.focus();
+
+        // Add some sample conversations after a delay
+        setTimeout(() => {
+            if (chatMessages.children.length === 1) { // Only welcome message
+                addAIMessage('Jaise aap dekh sakte hain, yeh ek fully functional chat app hai! Aap koi bhi message type kar ke试试 kar sakte hain.');
+            }
+        }, 3000);
+    </script>
+</body>
+</html>
